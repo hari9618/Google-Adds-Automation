@@ -6,6 +6,15 @@ __pycache__/
 # Google sign-in: never committed
 secrets/
 *.json.bak
-# the timer's run log (the change log, log/changes.jsonl, IS kept: it is the audit trail)
-log/*.log
+
+
 .claude/settings.local.json
+# Working data holds real campaigns, spend and search terms. This repo may be public, so it stays local.
+briefs/*
+!briefs/.gitkeep
+inbox/items/*
+!inbox/items/.gitkeep
+reports/*
+!reports/.gitkeep
+log/*
+!log/.gitkeep
