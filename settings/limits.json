@@ -1,0 +1,8 @@
+{
+  "_comment": "Hard spending limits. The Apply tool refuses any change that would break one, even after you click Allow. Edit by hand only: agents are blocked from editing this file. Amounts in US dollars. Fill these in before the first campaign; the Apply tool refuses to spend while any is 0.",
+  "daily_cap_usd": 0,
+  "monthly_cap_usd": 0,
+  "max_new_campaign_daily_budget_usd": 0,
+  "max_budget_increase_pct_per_week": 20,
+  "min_days_between_increases": 7
+}

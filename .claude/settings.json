@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__google-ads__search_search",
+      "mcp__google-ads__metadata_get_resource_metadata",
+      "mcp__google-ads__customers_list_accessible_customers",
+      "mcp__apply__preview_change",
+      "mcp__apply__undo_change",
+      "mcp__apply__recent_changes",
+      "mcp__apply__pause_campaigns"
+    ],
+    "ask": [
+      "mcp__apply__apply_change"
+    ],
+    "deny": [
+      "mcp__google-ads__assets_create_asset",
+      "mcp__google-ads__assets_upload_video_asset",
+      "mcp__google-ads__labels_manage_labels",
+      "mcp__google-ads__labels_manage_label_associations",
+      "Read(./secrets/**)"
+    ],
+    "disableBypassPermissionsMode": "disable"
+  },
+  "enableAllProjectMcpServers": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__.*|Bash|PowerShell|Read|Grep|Glob|Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [{"type": "command", "command": "uv run --no-project --quiet python .claude/hooks/guard.py"}]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [{"type": "command", "command": "uv run --no-project --quiet python .claude/hooks/startup_summary.py"}]
+      }
+    ]
+  }
+}

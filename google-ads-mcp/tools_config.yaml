@@ -1,0 +1,6 @@
+# Google's google-ads-mcp ships tools that CHANGE the account (assets, labels). Its README says
+# turning these two categories off gives "a strictly read-only deployment". We do that here, and
+# .claude/settings.json + the guard hook ALSO block every google-ads tool except the three read
+# tools, so a renamed key or a new write tool in a future version still cannot change anything.
+labels: false
+assets: false

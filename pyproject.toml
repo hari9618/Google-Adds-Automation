@@ -1,0 +1,23 @@
+[project]
+name = "caughtleads-ads"
+version = "0.1.0"
+description = "CaughtLeads Google Ads agents: Claude Code skills and sub-agents, plus the Apply connector"
+requires-python = ">=3.11"
+dependencies = [
+    "google-ads==35.1.0",
+    "mcp==2.3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "RUF"]

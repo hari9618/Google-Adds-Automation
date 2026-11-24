@@ -1,0 +1,15 @@
+{
+  "_comment": "Words and claims CaughtLeads never puts in an ad. Each pattern is a case-insensitive regular expression. The Apply tool refuses any headline or description that matches one. Edit by hand; agents may not edit this file.",
+  "banned": [
+    {"id": "answers-every-call", "pattern": "\\b(answers?|pick(s)? up|catch(es)?) (every|all) (calls?|leads?)\\b", "why": "we cannot promise every call is answered"},
+    {"id": "never-miss", "pattern": "\\bnever miss (a|another|any) (call|lead)", "why": "an absolute we cannot evidence"},
+    {"id": "job-not-appointment", "pattern": "\\bjobs?\\b", "why": "customer-facing copy says 'appointment', not 'job'"},
+    {"id": "revenue-promise", "pattern": "\\b(guarantee\\w*|double|triple|boost|increase|grow)\\b.{0,25}\\b(revenue|income|profit|sales)\\b|\\b(more|extra) (revenue|income|profit)\\b", "why": "we never promise revenue"},
+    {"id": "money-promise", "pattern": "\\$\\s?\\d[\\d,]*(k)?\\s*(more|extra|in (new )?revenue)", "why": "we never promise a dollar outcome"},
+    {"id": "outcome-promise", "pattern": "\\b(get|win|book) (more|\\d+%? more) (customers|clients|leads|appointments|calls)\\b", "why": "no outcome promises in headlines"},
+    {"id": "tcpa", "pattern": "\\bTCPA\\b", "why": "'TCPA-compliant' is a legal claim we cannot evidence"},
+    {"id": "em-dash", "pattern": "[\\u2013\\u2014]", "why": "no en or em dashes in our copy"},
+    {"id": "best-number-one", "pattern": "\\b(#1|number one|best in the)\\b", "why": "a superlative Google asks you to prove"}
+  ],
+  "allowed_caps": ["HVAC", "CRM", "SMS", "USA", "FAQ"]
+}

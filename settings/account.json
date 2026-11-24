@@ -1,0 +1,5 @@
+{
+  "_comment": "Which Google Ads account the Apply tool works on. Not secret. Digits only, no dashes. login_customer_id is the manager (MCC) account if access goes through one, else leave it empty. The secrets (developer token, OAuth) live in secrets/google-ads.yaml, which git ignores.",
+  "customer_id": "",
+  "login_customer_id": ""
+}
