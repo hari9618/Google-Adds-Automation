@@ -44,14 +44,19 @@ happens until you click Allow.** It runs on the Claude Code plan: no API key, no
    Then set `GOOGLE_APPLICATION_CREDENTIALS` (the path gcloud prints) and `GOOGLE_CLOUD_PROJECT` in your
    environment, and `GOOGLE_ADS_LOGIN_CUSTOMER_ID` if access goes through a manager account. If the
    connector asks for the developer token, follow its README.
-5. **Apply connector sign-in:** `secrets/google-ads.yaml` in Google's standard format (`developer_token`,
-   `client_id`, `client_secret`, `refresh_token`, `login_customer_id`, `use_proto_plus: True`).
+5. **Apply connector sign-in:** in a terminal (not through Claude), run
+   `uv run python tools/google_signin.py --client-secrets <your Desktop-app OAuth client json>`
+   (add `--login-customer-id <manager id>` if access goes through a manager account). It opens Google's
+   sign-in, asks for the developer token without showing it, and writes `secrets/google-ads.yaml`.
    `secrets/` is git-ignored and blocked from every agent.
 6. **Account and limits:** fill `settings/account.json` (customer id) and `settings/limits.json` (daily
    cap, monthly cap, biggest new-campaign budget). Until the caps are set, nothing can spend.
 7. **Emergency pause:** paste `google-scripts/emergency-pause.js` into Google Ads > Tools > Scripts, set its
    CONFIG (emails, the same monthly cap), Preview, then schedule it hourly.
-8. **Open this folder in Claude Code** and say "how did ads do yesterday?". Optional: "turn on the daily check".
+8. **Check it:** `uv run python tools/doctor.py` lists what is ready and what is missing (never prints a
+   secret). When it says Ready, `uv run python tools/doctor.py --live` reads the account once to prove
+   the sign-in works.
+9. **Open this folder in Claude Code** and say "how did ads do yesterday?". Optional: "turn on the daily check".
 
 ## Layout
 

@@ -44,6 +44,11 @@ Work moves between agents through files:
 - No en or em dashes. No "!" in headlines. Plain, specific, honest.
 - Google's limits: 3 to 15 headlines of at most 30 characters, 2 to 4 descriptions of at most 90.
 
+## Setup questions
+
+"Is it set up?" / "what's missing?": run `uv run --quiet python tools/doctor.py` and relay its TODO lines
+in plain words. Never run `tools/google_signin.py` yourself: the person runs it in a terminal.
+
 ## How to talk to the person
 
 Plain English, short, numbers first. Money in dollars, not micros. Say what you are about to do, what it
