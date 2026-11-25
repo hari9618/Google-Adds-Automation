@@ -1,0 +1,273 @@
+{
+  "about": "Repos we built the Ads agents, skills and Apply connector from. scripts/upstream_sync.py checks each one weekly (or every 'every_days') and opens a PR when a watched file changed. 'watch' = upstream paths we care about. 'ours' = our files that came from it. 'pinned' = the upstream commit our copy matches; only the script moves it. 'pin_in' = config files that run that exact commit. How it works: upstream/README.md.",
+  "reports": "upstream/reports",
+  "sources": [
+    {
+      "id": "google-ads-mcp",
+      "repo": "googleads/google-ads-mcp",
+      "branch": "main",
+      "every_days": 7,
+      "watch": [
+        "ads_mcp/",
+        "README.md",
+        "docs/",
+        "pyproject.toml"
+      ],
+      "ours": [
+        ".mcp.json",
+        "google-ads-mcp/tools_config.yaml",
+        ".claude/agents/analyst.md",
+        ".claude/hooks/guard.py"
+      ],
+      "why": "Google's MCP server that READS the account. .mcp.json runs it at the pinned commit, so a new tool (some change the account) can never appear without this review. The guard hook allows only its three read tools.",
+      "pin_in": [
+        ".mcp.json"
+      ],
+      "license": "Apache-2.0",
+      "pinned": {
+        "sha": "44ca7770519362c8f334875477e1ceb499f8d2dd",
+        "date": "2026-11-17T15:02:48Z"
+      }
+    },
+    {
+      "id": "google-ads-python",
+      "repo": "googleads/google-ads-python",
+      "branch": "main",
+      "every_days": 14,
+      "watch": [
+        "ChangeLog"
+      ],
+      "ours": [
+        "apply/gateway.py",
+        "apply/core.py",
+        "pyproject.toml"
+      ],
+      "why": "Google's Ads API client, the engine of the Apply connector. Its ChangeLog announces new API versions and sunsets (we write through v26); the package version itself is pinned in pyproject.toml and bumped separately.",
+      "license": "Apache-2.0",
+      "pinned": {
+        "sha": "6ae994bbbb751e28c3be55ad4759c6cc5298708d",
+        "date": "2026-11-23T10:06:28Z"
+      }
+    },
+    {
+      "id": "google-ads-developer-assistant",
+      "repo": "googleads/google-ads-api-developer-assistant",
+      "branch": "main",
+      "every_days": 14,
+      "watch": [
+        "plugins/",
+        "README.md",
+        "ChangeLog"
+      ],
+      "ours": [
+        ".claude/skills/",
+        ".claude/agents/builder.md",
+        "apply/"
+      ],
+      "why": "Google's own Claude Code plugin for the Ads API: how it shapes queries, mutates and validate-only previews.",
+      "license": "Apache-2.0",
+      "pinned": {
+        "sha": "a3d565bcfc55977134738e1beed9eff76fe775c5",
+        "date": "2026-11-22T13:45:07Z"
+      }
+    },
+    {
+      "id": "adloop",
+      "repo": "kLOsk/adloop",
+      "branch": "main",
+      "every_days": 14,
+      "watch": [
+        "src/adloop/",
+        "README.md",
+        "CLAUDE.md",
+        ".claude/"
+      ],
+      "ours": [
+        "apply/",
+        ".claude/hooks/guard.py",
+        "settings/limits.json",
+        ".claude/skills/approve/"
+      ],
+      "why": "The preview-then-confirm safety design the Apply connector follows (limits, change log, nothing live without an approval).",
+      "license": "MIT",
+      "pinned": {
+        "sha": "816935c11cecccca02f966c81f519ed4dc3895d2",
+        "date": "2026-11-16T16:37:11Z"
+      }
+    },
+    {
+      "id": "claude-ads",
+      "repo": "AgriciDaniel/claude-ads",
+      "branch": "main",
+      "every_days": 14,
+      "watch": [
+        "skills/ads-google/",
+        "skills/ads-audit/",
+        "skills/ads-optimize/",
+        "skills/ads-budget/",
+        "skills/ads-plan/",
+        "agents/",
+        "CHANGELOG.md"
+      ],
+      "ours": [
+        ".claude/skills/",
+        ".claude/agents/"
+      ],
+      "why": "A Claude Code ads skill set: audit, optimise and budget checklists our Analyst and Optimizer agents draw on.",
+      "license": "MIT",
+      "pinned": {
+        "sha": "fc3908e786c318776df89a3a098333da377364be",
+        "date": "2026-10-17T01:33:38Z"
+      }
+    },
+    {
+      "id": "marketingskills",
+      "repo": "coreyhaines31/marketingskills",
+      "branch": "main",
+      "every_days": 14,
+      "watch": [
+        "skills/ads/",
+        "skills/ad-creative/",
+        "skills/copywriting/",
+        "skills/conversion-tracking/"
+      ],
+      "ours": [
+        ".claude/agents/builder.md",
+        ".claude/skills/new-campaign/",
+        "settings/copy_rules.json"
+      ],
+      "why": "Marketing skills for ad copy, ad creative and conversion tracking: what the Builder agent and the copy rules follow.",
+      "license": "MIT",
+      "pinned": {
+        "sha": "8fd2fcade2fd6629026e9dfe6d133b55b36968b9",
+        "date": "2026-11-23T21:00:55Z"
+      }
+    },
+    {
+      "id": "google-ads-copilot",
+      "repo": "TheMattBerman/google-ads-copilot",
+      "branch": "main",
+      "every_days": 28,
+      "watch": [
+        "skills/",
+        "agents/",
+        "APPLY-LAYER.md",
+        "OPERATOR-PLAYBOOK.md"
+      ],
+      "ours": [
+        ".claude/skills/",
+        ".claude/agents/",
+        "apply/"
+      ],
+      "why": "A Google Ads operator built on Claude Code (daily, search terms, negatives, RSAs). The daily and weekly review skills borrow its rhythm.",
+      "license": "MIT",
+      "pinned": {
+        "sha": "2c253ee988b5540465317cde0cd4d6915dc2b382",
+        "date": "2026-03-19T22:50:12Z"
+      }
+    },
+    {
+      "id": "negative-keyword-cleaner",
+      "repo": "google-marketing-solutions/negative_keyword_cleaner",
+      "branch": "main",
+      "every_days": 28,
+      "watch": [
+        "src/",
+        "README.md"
+      ],
+      "ours": [
+        ".claude/agents/optimizer.md",
+        ".claude/skills/weekly-review/"
+      ],
+      "why": "Google's method for finding negative keywords that block good traffic, which the Optimizer's negative-keyword proposals follow.",
+      "license": "Apache-2.0",
+      "pinned": {
+        "sha": "9b12527b3e025b81dc03248730695e6b14b30283",
+        "date": "2026-10-21T12:36:05Z"
+      }
+    },
+    {
+      "id": "free-google-ads-scripts",
+      "repo": "charlesbannister/free-google-ads-scripts",
+      "branch": "master",
+      "every_days": 28,
+      "watch": [
+        "README.md",
+        "advanced_anomaly_detector/",
+        "scripts_api_version_checker/"
+      ],
+      "ours": [
+        "google-scripts/"
+      ],
+      "why": "Google Ads Scripts for alerts and anomalies, the pattern behind our emergency-pause script. GPL-3.0: take ideas only, never copy code into this repo.",
+      "license": "GPL-3.0",
+      "pinned": {
+        "sha": "011498d89b91df0be081b75a8f6bbbba1145a2c9",
+        "date": "2026-11-18T18:16:33Z"
+      }
+    },
+    {
+      "id": "google-ads-skills",
+      "repo": "google/skills",
+      "branch": "main",
+      "every_days": 14,
+      "watch": [
+        "skills/ads/"
+      ],
+      "ours": [
+        ".claude/skills/",
+        "README.md"
+      ],
+      "why": "Google's official agent skills for Ads, including the Data Manager API: the planned 'closing the loop' step (sending trials back to Google).",
+      "license": "Apache-2.0",
+      "pinned": {
+        "sha": "12c78e848e4800d701bdf8baa836e3eb111f628d",
+        "date": "2026-11-24T07:40:46Z"
+      }
+    },
+    {
+      "id": "claude-code",
+      "repo": "anthropics/claude-code",
+      "branch": "main",
+      "every_days": 7,
+      "patch_lines": 1500,
+      "watch": [
+        "CHANGELOG.md"
+      ],
+      "ours": [
+        ".claude/agents/",
+        ".claude/skills/",
+        ".claude/hooks/",
+        ".claude/settings.json",
+        "CLAUDE.md"
+      ],
+      "why": "Claude Code itself: agent, skill, hook and permission (ask/allow/deny) changes land in its changelog. The guard hook and the Allow prompts depend on them.",
+      "license": "none",
+      "pinned": {
+        "sha": "a4cdd71b3df8927105db205f5b6ec7cdef8708b3",
+        "date": "2026-11-24T07:32:18Z"
+      }
+    },
+    {
+      "id": "anthropic-skill-creator",
+      "repo": "anthropics/skills",
+      "branch": "main",
+      "every_days": 14,
+      "watch": [
+        "skills/skill-creator/SKILL.md",
+        "skills/skill-creator/references/",
+        "skills/skill-creator/agents/"
+      ],
+      "ours": [
+        ".claude/skills/",
+        ".claude/agents/"
+      ],
+      "why": "Anthropic's own guide for writing skills and sub-agents. Our eight skills and four agents should follow its current advice.",
+      "license": "none",
+      "pinned": {
+        "sha": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
+        "date": "2026-11-16T14:22:47Z"
+      }
+    }
+  ]
+}

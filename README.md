@@ -133,6 +133,7 @@ flowchart LR
 | New campaigns and new ads start switched off | `apply/gateway.py` |
 | Copy rules: no "answers every call", "appointment" not "job", no revenue or outcome promises, no "TCPA", no "!" or shouting | `settings/copy_rules.json`, `apply/copy_rules.py` |
 | Previews live in memory only: nothing on disk can be edited into an approval | `apply/core.py` |
+| Google's read connector runs at one pinned commit, never "whatever is newest" | `.mcp.json`, `upstream/sources.json` |
 | Every change logged with before, after and its undo | `log/changes.jsonl` |
 | Emergency pause inside Google, hourly: works with every laptop off, and only ever pauses | `google-scripts/emergency-pause.js` |
 | The guard fails closed, and Claude Code's "skip permissions" mode is disabled | `.claude/hooks/guard.py`, `.claude/settings.json` |
@@ -196,7 +197,9 @@ google-ads-mcp/            tools_config.yaml (switches off the connector's write
 google-scripts/            emergency-pause.js (runs inside Google Ads, hourly)
 scripts/                   daily-check.ps1 / daily-check.sh (the 7 AM timer: Windows, Mac, Linux)
 tools/                     doctor.py · google_signin.py · inbox.py
-tests/                     46 tests: limits, copy rules, previews, undo, pause, the guard, Google request building
+upstream/                  sources.json (the repos we built from, pinned) · reports/ (what changed, weekly)
+.github/workflows/         tests.yml (every push and PR) · upstream-sync.yml (Mondays)
+tests/                     64 tests: limits, copy rules, previews, undo, pause, the guard, Google request building, upstream sync
 briefs/ inbox/ reports/ log/   working files (git-ignored: they hold real campaign data)
 ```
 
@@ -224,6 +227,20 @@ uv run ruff check .
 
 To edit the protected files (limits, rules, settings, `apply/`) from inside Claude Code, start it from a shell
 with `CL_ADS_DEV=1`. Never use that for day-to-day running.
+
+## Keeping it current
+
+This repo was built from other people's repos (Google's Ads tools, Claude Code, several ads skill
+sets; the full list is in [`upstream/sources.json`](upstream/sources.json)). Every Monday
+[`upstream-sync.yml`](.github/workflows/upstream-sync.yml) checks whether any of them changed in the
+files we care about. If so, it opens **one** pull request with a plain report: what changed, and
+which of our files came from it. It changes none of our files and never merges itself. Run
+`/upstream-sync` in Claude Code on that branch to adapt our skills and agents, let the tests pass,
+then merge. Details: [`upstream/README.md`](upstream/README.md).
+
+Google's read connector runs at the **exact commit** pinned in `.mcp.json`, so a new connector tool
+(some of them change the account) can only arrive through that reviewed pull request. Python
+packages are bumped by Dependabot.
 
 ## Not built yet
 

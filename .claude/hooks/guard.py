@@ -26,7 +26,8 @@ ROOT = Path(__file__).resolve().parents[2]
 READ_TOOLS = {"mcp__google-ads__search_search", "mcp__google-ads__metadata_get_resource_metadata",
               "mcp__google-ads__customers_list_accessible_customers"}
 PROTECTED = ("settings/limits.json", "settings/copy_rules.json", "settings/account.json", ".claude/settings.json",
-             ".claude/hooks/", ".mcp.json", "google-ads-mcp/", "apply/", "secrets/", "log/changes.jsonl")
+             ".claude/hooks/", ".mcp.json", "google-ads-mcp/", "apply/", "secrets/", "log/changes.jsonl",
+             "upstream/sources.json", ".github/")
 SHELL_BLOCK = re.compile(r"googleads\.googleapis|google\.ads\.googleads|GoogleAdsClient|google-ads\.yaml|"
                          r"secrets[/\\]|application_default_credentials|CL_ADS_DEV", re.I)
 

@@ -1,0 +1,18 @@
+# Python packages (google-ads, mcp) and the GitHub Actions the workflows use. Code libraries are
+# bumped here; the repos we built skills and agents from are watched by upstream-sync.yml instead.
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      python:
+        patterns: ["*"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"

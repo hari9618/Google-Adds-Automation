@@ -1,0 +1,32 @@
+name: tests
+
+# The test suite and lint on every push and pull request, so an upstream-sync PR (or any change)
+# cannot be merged on a red suite. No secrets, no Google account: everything is tested offline.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Tests
+        run: uv run --extra dev pytest -q
+
+      - name: Lint
+        run: uv run --extra dev ruff check .
