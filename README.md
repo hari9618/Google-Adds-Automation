@@ -25,7 +25,7 @@ flowchart TB
     timer(["7 AM timer<br/>claude -p /daily-review"])
 
     subgraph repo ["This repo, in Claude Code"]
-        skills["Skills<br/>new-campaign · report · inbox · approve<br/>pause · daily-review · weekly-review"]
+        skills["Skills<br/>new-campaign · report · inbox · approve<br/>pause · daily-review · weekly-review<br/>tracking-check · landing-check · upstream-sync"]
         subgraph agents ["Sub-agents"]
             builder["Builder<br/>plans campaigns"]
             analyst["Analyst<br/>explains results"]
@@ -189,6 +189,7 @@ CLAUDE.md                  the product, the copy rules, "never change the accoun
 .claude/
   agents/                  builder · operator · analyst · optimizer
   skills/                  new-campaign · report · inbox · approve · pause · daily-review · weekly-review · daily-check
+                           tracking-check · landing-check · upstream-sync
   hooks/                   guard.py (fails closed) · startup_summary.py (one line when the chat opens)
   settings.json            allow reads · ASK for apply_change · deny Google's write tools · hooks
 apply/                     the Apply connector: an MCP server on Google's google-ads library (API v26)
@@ -199,7 +200,7 @@ scripts/                   daily-check.ps1 / daily-check.sh (the 7 AM timer: Win
 tools/                     doctor.py · google_signin.py · inbox.py
 upstream/                  sources.json (the repos we built from, pinned) · reports/ (what changed, weekly)
 .github/workflows/         tests.yml (every push and PR) · upstream-sync.yml (Mondays)
-tests/                     64 tests: limits, copy rules, previews, undo, pause, the guard, Google request building, upstream sync
+tests/                     70 tests: limits, copy rules, previews, undo, pause, the guard, Google request building, upstream sync
 briefs/ inbox/ reports/ log/   working files (git-ignored: they hold real campaign data)
 ```
 

@@ -43,6 +43,9 @@ def test_a_new_campaign_is_paused_search_only_and_declares_no_eu_political_ads(c
     req.validate_only = True
     req.mutate_operations.extend(ops)
     assert len(req.mutate_operations) == 7
+    # Google retired language targeting for Search (Ads API, 30 Sep 2026): adding one now errors.
+    criteria = [op.campaign_criterion_operation.create for op in ops if "campaign_criterion_operation" in op]
+    assert criteria and not any("language" in c for c in criteria)
 
 
 def test_a_new_ad_in_a_live_campaign_starts_switched_off(client):

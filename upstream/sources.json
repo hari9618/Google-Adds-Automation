@@ -69,7 +69,11 @@
       "pinned": {
         "sha": "a3d565bcfc55977134738e1beed9eff76fe775c5",
         "date": "2026-11-22T13:45:07Z"
-      }
+      },
+      "catalog": [
+        "plugins/google-ads-api-developer-assistant/skills/",
+        "plugins/google-ads-api-developer-assistant/commands/"
+      ]
     },
     {
       "id": "adloop",
@@ -91,8 +95,8 @@
       "why": "The preview-then-confirm safety design the Apply connector follows (limits, change log, nothing live without an approval).",
       "license": "MIT",
       "pinned": {
-        "sha": "816935c11cecccca02f966c81f519ed4dc3895d2",
-        "date": "2026-11-16T16:37:11Z"
+        "sha": "233cf597b1c4ec1e9c154f316b27a043ecd180db",
+        "date": "2026-11-25T19:49:26Z"
       }
     },
     {
@@ -118,7 +122,11 @@
       "pinned": {
         "sha": "fc3908e786c318776df89a3a098333da377364be",
         "date": "2026-10-17T01:33:38Z"
-      }
+      },
+      "catalog": [
+        "skills/",
+        "agents/"
+      ]
     },
     {
       "id": "marketingskills",
@@ -141,7 +149,10 @@
       "pinned": {
         "sha": "8fd2fcade2fd6629026e9dfe6d133b55b36968b9",
         "date": "2026-11-23T21:00:55Z"
-      }
+      },
+      "catalog": [
+        "skills/"
+      ]
     },
     {
       "id": "google-ads-copilot",
@@ -164,7 +175,11 @@
       "pinned": {
         "sha": "2c253ee988b5540465317cde0cd4d6915dc2b382",
         "date": "2026-03-19T22:50:12Z"
-      }
+      },
+      "catalog": [
+        "skills/",
+        "agents/"
+      ]
     },
     {
       "id": "negative-keyword-cleaner",
@@ -202,8 +217,8 @@
       "why": "Google Ads Scripts for alerts and anomalies, the pattern behind our emergency-pause script. GPL-3.0: take ideas only, never copy code into this repo.",
       "license": "GPL-3.0",
       "pinned": {
-        "sha": "011498d89b91df0be081b75a8f6bbbba1145a2c9",
-        "date": "2026-11-18T18:16:33Z"
+        "sha": "6f6f920e747313f8bbce8bfd238f0979264dcb7c",
+        "date": "2026-11-25T17:22:19Z"
       }
     },
     {
@@ -221,9 +236,12 @@
       "why": "Google's official agent skills for Ads, including the Data Manager API: the planned 'closing the loop' step (sending trials back to Google).",
       "license": "Apache-2.0",
       "pinned": {
-        "sha": "12c78e848e4800d701bdf8baa836e3eb111f628d",
-        "date": "2026-11-24T07:40:46Z"
-      }
+        "sha": "b315c2eea312b624f3fbe60018a6f741dd558ebb",
+        "date": "2026-11-25T19:07:30Z"
+      },
+      "catalog": [
+        "skills/ads/"
+      ]
     },
     {
       "id": "claude-code",
@@ -244,8 +262,8 @@
       "why": "Claude Code itself: agent, skill, hook and permission (ask/allow/deny) changes land in its changelog. The guard hook and the Allow prompts depend on them.",
       "license": "none",
       "pinned": {
-        "sha": "a4cdd71b3df8927105db205f5b6ec7cdef8708b3",
-        "date": "2026-11-24T07:32:18Z"
+        "sha": "a5e837526c8c37419cc6d9546fa4fa75b38f6118",
+        "date": "2026-11-26T00:30:43Z"
       }
     },
     {

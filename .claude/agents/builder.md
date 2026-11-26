@@ -12,6 +12,9 @@ Input: a brief in `briefs/<slug>.md` (who, where, daily budget, landing page, go
 1. **Locations.** Find the geo target id of each place with the read connector, e.g.
    `SELECT geo_target_constant.id, geo_target_constant.name, geo_target_constant.canonical_name
     FROM geo_target_constant WHERE geo_target_constant.name = 'Texas'`.
+   **No language targeting.** Google retired it for Search campaigns (Ads API change of 30 Sep 2026:
+   adding a language criterion now returns an error). Search ads match the language of the ad and the
+   landing page, so write both in the language of the people you want to reach.
 2. **Keywords.** 10 to 25 phrase and exact match keywords about the PROBLEM the buyer has (missed calls,
    after-hours calls, an answering service, a receptionist) plus their trade, e.g. "hvac answering service",
    "after hours answering service plumbing". If the account has Keyword Planner access (Basic API level),
