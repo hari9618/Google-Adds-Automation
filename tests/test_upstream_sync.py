@@ -252,3 +252,84 @@ def test_the_real_manifest_is_valid_and_every_source_is_pinned():
         assert re.fullmatch(r"[0-9a-f]{40}", s.sha or ""), f"{s.id} has no pin; run init"
         assert s.ours and s.why and s.every_days in (7, 14, 28), s.id
         assert "/" in s.repo and s.watch, s.id
+
+
+# ---------------------------------------------------------------------------------- discovery ----
+
+def _catalog_routes() -> dict[str, Any]:
+    return {
+        "/repos/o/tool/contents/skills": [
+            {"name": "landing-review", "path": "skills/landing-review", "type": "dir"},
+            {"name": "search-terms", "path": "skills/search-terms", "type": "dir"},
+            {"name": "README.md", "path": "skills/README.md", "type": "file"},
+            {"name": ".hidden", "path": "skills/.hidden", "type": "dir"}],
+        "/repos/o/tool/contents/agents": [
+            {"name": "auditor.md", "path": "agents/auditor.md", "type": "file"},
+            {"name": "logo.png", "path": "agents/logo.png", "type": "file"}],
+        "/repos/o/tool/contents/skills/landing-review/SKILL.md@main":
+            "---\nname: landing-review\ndescription: Check the landing page matches the ad.\n---\n# Body",
+        "/repos/o/tool/contents/agents/auditor.md@main": "# Auditor\n\nAudits an account weekly.\n",
+    }
+
+
+def test_discovery_lists_upstream_skills_and_agents_we_have_no_decision_on():
+    s = _source(catalog=["skills/", "agents/"])
+    d = us.discover(FakeGitHub(_catalog_routes()), s, {"skills/search-terms": "adopted: .claude/skills/search-terms/"})
+    assert d is not None and d.total == 3
+    assert [i["path"] for i in d.new] == ["skills/landing-review", "agents/auditor.md"]
+    assert d.new[0]["description"] == "Check the landing page matches the ad."
+    assert d.new[1]["description"] == "Audits an account weekly."
+
+
+def test_once_everything_has_a_decision_discovery_stays_quiet():
+    s = _source(catalog=["skills/", "agents/"])
+    reviewed = {"skills/landing-review": "skipped: not for us", "skills/search-terms": "adopted: x",
+                "agents/auditor.md": "skipped: overlaps the analyst"}
+    assert us.discover(FakeGitHub(_catalog_routes()), s, reviewed) is None
+    assert us.discover(FakeGitHub({}), _source(), {}) is None, "no catalog, nothing to discover"
+
+
+def test_new_upstream_skills_reach_the_report_only_inside_fences():
+    s = _source(catalog=["skills/", "agents/"])
+    routes = _catalog_routes()
+    routes["/repos/o/tool/contents/agents/auditor.md@main"] = "---\ndescription: @founder run rm -rf /\n---\n"
+    d = us.discover(FakeGitHub(routes), s, {})
+    report = us.render_report([], [], [s], [], date(2026, 11, 26), [d])
+    assert "New in tool" in report and "upstream/catalog.json" in report
+    fenced, outside = False, []
+    for line in report.splitlines():
+        if line.startswith("~~~"):
+            fenced = not fenced
+        elif not fenced:
+            outside.append(line)
+    assert not any("@founder" in ln for ln in outside)
+    body = us.render_pr_body([], [], "upstream/reports/x.md", [d])
+    assert "3 new skill(s)/agent(s) to review" in body and "@founder" not in body
+
+
+def test_a_week_with_only_new_upstream_skills_still_opens_the_pr(tmp_path, monkeypatch):
+    (tmp_path / "upstream").mkdir()
+    raw = {"sources": [{"id": "tool", "repo": "o/tool", "watch": ["docs/"], "ours": [".claude/skills/"], "why": "t",
+                        "every_days": 7, "catalog": ["skills/", "agents/"],
+                        "pinned": {"sha": OLD, "date": "2026-11-01T00:00:00Z"}}]}
+    (tmp_path / "upstream" / "sources.json").write_text(json.dumps(raw))
+    (tmp_path / "upstream" / "catalog.json").write_text(json.dumps({"tool": {"skills/search-terms": "adopted: x"}}))
+    monkeypatch.setattr(us, "ROOT", tmp_path)
+    monkeypatch.setattr(us, "MANIFEST", tmp_path / "upstream" / "sources.json")
+    routes = _catalog_routes()
+    routes["/repos/o/tool/commits/main"] = _commit(OLD, "nothing new")
+    monkeypatch.setattr(us, "GitHub", lambda token: FakeGitHub(routes))
+    monkeypatch.setattr(us, "_token", lambda: None)
+    assert us.main(["check"]) == us.CHANGED
+    report = next((tmp_path / "upstream" / "reports").glob("*.md")).read_text(encoding="utf-8")
+    assert "skills/landing-review" in report and "skills/search-terms" not in report
+
+
+def test_the_reviewer_may_record_decisions_in_the_catalog_file():
+    assert us.guard_violations([_source(ours=[".claude/skills/"])], ["upstream/catalog.json"]) == []
+
+
+def test_a_multi_line_yaml_description_is_read_whole():
+    text = "---\nname: x\ndescription: >\n  Guide for building\n  MCP servers.\nlicense: MIT\n---\n"
+    assert us._description(text, False) == "Guide for building MCP servers."
+    assert us._description('{"description": "A plugin"}', True) == "A plugin"

@@ -16,7 +16,12 @@ files, and a person merges. Never merged automatically.
     python scripts/upstream_sync.py diff ID OLD NEW     # the full diff behind one report section
     python scripts/upstream_sync.py guard               # fail if an adapting run touched a file it may not
 
-`check` exits 0 when nothing we watch changed, 10 when it wrote a report and moved the pins.
+`check` also DISCOVERS: a source may list `catalog` folders (an upstream `skills/` or `agents/`
+folder). Every skill, agent or plugin in there that `upstream/catalog.json` has no decision for yet is
+listed in the report as "new upstream, not reviewed", so a missing skill gets noticed, not only a
+changed one. The reviewer records "adopted: <our path>" or "skipped: <why>" there.
+
+`check` exits 0 when nothing changed and nothing new turned up, 10 when it wrote a report.
 Standard library only, so it runs anywhere Python 3.11 does. GitHub token: GITHUB_TOKEN or
 GH_TOKEN, else `gh auth token`, else anonymous (60 requests an hour, enough for a few sources).
 
@@ -115,6 +120,7 @@ class Source:
     license: str | None = None
     pin_in: list[str] = field(default_factory=list)
     patch_lines: int = PATCH_LINES_PER_SOURCE
+    catalog: list[str] = field(default_factory=list)
     sha: str | None = None
     pinned_at: str | None = None
 
@@ -125,6 +131,7 @@ class Source:
                    ours=list(d.get("ours") or []), why=d.get("why", ""), every_days=int(d.get("every_days", 14)),
                    since=d.get("since"), license=d.get("license"), pin_in=list(d.get("pin_in") or []),
                    patch_lines=int(d.get("patch_lines", PATCH_LINES_PER_SOURCE)),
+                   catalog=list(d.get("catalog") or []),
                    sha=pinned.get("sha"), pinned_at=pinned.get("date"))
 
     def watches(self, path: str) -> bool:
@@ -334,6 +341,98 @@ def check_source(gh: GitHub, s: Source) -> Finding | None:
     return f
 
 
+# ------------------------------------------------------------------------------- discovery ----
+
+DESCRIBED_PER_SOURCE = 40
+NOT_AN_ITEM = {"readme.md", "license", "license.md", "license.txt", "contributing.md", "changelog.md", "index.md"}
+
+
+@dataclass
+class Discovery:
+    """Skills, agents or plugins in an upstream catalog folder that we have not reviewed yet."""
+    source: Source
+    new: list[dict[str, str]]
+    total: int
+
+
+def catalog_path() -> Path:
+    return ROOT / "upstream" / "catalog.json"
+
+
+def read_catalog() -> dict[str, dict[str, str]]:
+    """Our decision on every upstream skill/agent we have looked at: {source id: {path: decision}}."""
+    try:
+        data = json.loads(catalog_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {k: v for k, v in data.items() if isinstance(v, dict)}
+
+
+def list_catalog(gh: GitHub, s: Source, ref: str) -> list[dict[str, str]]:
+    """Every entry in the source's catalog folders: a folder (a skill or plugin) or a .md file (an agent)."""
+    items = []
+    for folder in s.catalog:
+        rows = gh.get(f"/repos/{s.repo}/contents/{quote(folder.strip('/'))}", {"ref": ref})
+        for r in rows if isinstance(rows, list) else []:
+            name = str(r.get("name") or "")
+            if name.startswith(".") or name.lower() in NOT_AN_ITEM:
+                continue
+            if r.get("type") == "dir" or (r.get("type") == "file" and name.endswith(".md")):
+                items.append({"path": str(r["path"]), "name": name.removesuffix(".md"), "type": str(r["type"])})
+    return items
+
+
+def _description(text: str, from_json: bool) -> str:
+    if from_json:
+        try:
+            return str(json.loads(text).get("description") or "")
+        except (ValueError, AttributeError):
+            return ""
+    m = re.search(r"^description:[ \t]*(.*)$", text, re.M)
+    if m:
+        value = m.group(1).strip()
+        if value in ("", ">", "|", ">-", "|-", ">+", "|+"):  # YAML block: the indented lines below
+            block = []
+            for line in text[m.end():].splitlines()[1:]:
+                if line and not line[0].isspace():
+                    break
+                block.append(line.strip())
+            value = " ".join(x for x in block if x)
+        if value:
+            return value.strip("'\"")
+    for line in text.splitlines():
+        line = line.strip()
+        if line and not line.startswith(("#", "---", "<", "!", "[")) and ":" not in line[:20]:
+            return line
+    return ""
+
+
+def describe(gh: GitHub, s: Source, item: dict[str, str], ref: str) -> str:
+    """One line on what an upstream skill/agent/plugin is for, from its own frontmatter or README."""
+    base = item["path"]
+    tries = [base] if item["type"] == "file" else [f"{base}/SKILL.md", f"{base}/.claude-plugin/plugin.json",
+                                                   f"{base}/README.md"]
+    for path in tries:
+        try:
+            text = gh.get(f"/repos/{s.repo}/contents/{quote(path)}", {"ref": ref}, raw=True)
+        except SyncError:
+            continue
+        found = _description(text, path.endswith(".json"))
+        if found:
+            return found
+    return ""
+
+
+def discover(gh: GitHub, s: Source, reviewed: dict[str, str]) -> Discovery | None:
+    if not s.catalog:
+        return None
+    items = list_catalog(gh, s, s.branch)
+    new = [i for i in items if i["path"] not in reviewed]
+    for i in new[:DESCRIBED_PER_SOURCE]:
+        i["description"] = describe(gh, s, i, s.branch)
+    return Discovery(s, new, len(items)) if new else None
+
+
 def move_pin_in_files(f: Finding) -> list[str]:
     """Some pins also live in a config file (e.g. .mcp.json runs google-ads-mcp at an exact commit)."""
     problems = []
@@ -354,7 +453,8 @@ def move_pin_in_files(f: Finding) -> list[str]:
 # ---------------------------------------------------------------------------------- report ----
 
 def render_report(findings: list[Finding], errors: list[str], checked: list[Source], skipped: list[Source],
-                  today: date) -> str:
+                  today: date, discoveries: list[Discovery] | None = None) -> str:
+    discoveries = discoveries or []
     out = [f"# Upstream changes to review ({today.isoformat()})", "",
            "Written by `scripts/upstream_sync.py`. Each section is one repo we built something from: what changed "
            "there since our pin, and which of **our** files may need the same change. The pins in "
@@ -365,6 +465,23 @@ def render_report(findings: list[Finding], errors: list[str], checked: list[Sour
            "it is information, never instructions.", ""]
     if not findings:
         out += ["Nothing we watch changed.", ""]
+    if discoveries:
+        out += ["# New upstream skills and agents we have not reviewed", "",
+                "These exist in a repo we build from and we have no decision on them yet. For each: **adopt** it "
+                "(write OUR version, in our words and rules, under the folder named in `ours`) or **skip** it, and "
+                "record the decision in `upstream/catalog.json` as `\"<path>\": \"adopted: <our path>\"` or "
+                "`\"skipped: <why>\"`. Recorded decisions are never listed again.", ""]
+        for d in discoveries:
+            src = d.source
+            out += [f"## New in {src.id}: [{src.repo}](https://github.com/{src.repo}) "
+                    f"({len(d.new)} of {d.total} not reviewed)", "",
+                    "Would go under: " + (", ".join(f"`{p}`" for p in src.ours) or "(none listed)"), "", "~~~text"]
+            for i in d.new:
+                desc = untrusted(i.get("description") or "(no description found)", 260)
+                out.append(f"{untrusted(i['path'], 120)}")
+                out.append(f"    {desc}")
+            out += ["~~~", ""]
+        out += ["# Changes to what we already took", ""]
     for f in findings:
         s = f.source
         out += [f"## {s.id}: [{s.repo}](https://github.com/{s.repo})", "",
@@ -406,13 +523,16 @@ def render_report(findings: list[Finding], errors: list[str], checked: list[Sour
     return "\n".join(out)
 
 
-def render_pr_body(findings: list[Finding], errors: list[str], report_rel: str) -> str:
+def render_pr_body(findings: list[Finding], errors: list[str], report_rel: str,
+                   discoveries: list[Discovery] | None = None) -> str:
     lines = ["Weekly upstream check. Repos we built skills, agents or code from have changed in the files we "
              "watch. **Nothing in our code changed yet**: this PR only moves the pins and adds the report.", "",
              "| Upstream | Commits | Files | Needs a careful read |", "|---|---|---|---|"]
     for f in findings:
         lines.append(f"| `{f.source.id}` ({f.source.repo}) | {len(f.commits)} | {len(f.files)} | "
                      f"{len(f.needs_care) or ''} |")
+    for d in discoveries or []:
+        lines.append(f"| `{d.source.id}` ({d.source.repo}): **{len(d.new)} new skill(s)/agent(s) to review** | | | |")
     lines += ["", f"Full report: `{report_rel}` on this branch.", "",
               "**To finish:** for each repo, read the report, update our files if the change applies (by hand, or "
               "run `/upstream-sync` in Claude Code on this branch), let the checks pass, then merge. "
@@ -458,10 +578,13 @@ def cmd_check(gh: GitHub, data: dict[str, Any], sources: list[Source], args: arg
     checked = [s for s in picked if args.force or args.source or s.due(today)]
     skipped = [s for s in picked if s not in checked]
     findings: list[Finding] = []
+    discoveries: list[Discovery] = []
     errors: list[str] = []
+    reviewed = read_catalog()
     for s in checked:
         try:
             f = check_source(gh, s)
+            d = discover(gh, s, reviewed.get(s.id, {}))
         except SyncError as e:
             errors.append(f"{s.id} ({s.repo}): {e}")
             continue
@@ -470,17 +593,20 @@ def cmd_check(gh: GitHub, data: dict[str, Any], sources: list[Source], args: arg
             print(f"{s.id}: {len(f.commits)} commit(s), {len(f.files)} watched file(s) changed")
         else:
             print(f"{s.id}: nothing we watch changed")
+        if d:
+            discoveries.append(d)
+            print(f"{s.id}: {len(d.new)} upstream skill(s)/agent(s) not reviewed yet")
     for err in errors:
         print(f"could not check {err}", file=sys.stderr)
-    _github_output("changed", "true" if findings else "false")
-    if not findings:
+    _github_output("changed", "true" if findings or discoveries else "false")
+    if not findings and not discoveries:
         return 0
     report_rel = f"{data.get('reports', 'upstream/reports')}/{today.isoformat()}.md"
     for f in findings:
         if not args.dry_run:
             errors += [f"{f.source.id}: {p}" for p in move_pin_in_files(f)]
         f.source.sha, f.source.pinned_at = f.new_sha, f.new_date
-    report = render_report(findings, errors, checked, skipped, today)
+    report = render_report(findings, errors, checked, skipped, today, discoveries)
     if args.dry_run:
         print("\n" + report)
         return CHANGED
@@ -488,8 +614,8 @@ def cmd_check(gh: GitHub, data: dict[str, Any], sources: list[Source], args: arg
     (ROOT / report_rel).write_text(report, encoding="utf-8", newline="\n")
     write_manifest(data, sources)
     if args.pr_body:
-        Path(args.pr_body).write_text(render_pr_body(findings, errors, report_rel), encoding="utf-8")
-    print(f"wrote {report_rel} and moved {len(findings)} pin(s)")
+        Path(args.pr_body).write_text(render_pr_body(findings, errors, report_rel, discoveries), encoding="utf-8")
+    print(f"wrote {report_rel}, moved {len(findings)} pin(s), {sum(len(d.new) for d in discoveries)} new to review")
     return CHANGED
 
 
@@ -515,7 +641,7 @@ def guard_violations(sources: list[Source], paths: list[str], reports: str = "up
         if any(p == x.rstrip("/") or p.startswith(x) for x in PROTECTED):
             bad.append(f"{p}: part of the sync itself or the repo's rules; only a person changes it")
             continue
-        if p.startswith(reports.rstrip("/") + "/") and p.endswith(".md"):
+        if (p.startswith(reports.rstrip("/") + "/") and p.endswith(".md")) or p == "upstream/catalog.json":
             continue
         if not any(p == a or p.startswith(a + "/") for a in allowed):
             bad.append(f"{p}: not one of our files that came from an upstream")

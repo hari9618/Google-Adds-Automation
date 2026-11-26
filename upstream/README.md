@@ -11,24 +11,26 @@ change every week. This folder is how we notice, without anything changing on it
 Every Monday (GitHub Actions, upstream-sync.yml)
    |
    |  for each repo in sources.json that is due (every 7, 14 or 28 days):
-   |    "what changed in the files we watch since the commit we last took?"
+   |    1. UPDATED?  "what changed in the files we watch since the commit we last took?"
+   |    2. MISSING?  "which skills/agents in its catalog folder have we never reviewed?"
    |
-   |-- nothing changed ............................ done, no PR, no noise
+   |-- nothing changed, nothing new ............... done, no PR, no noise
    |
-   '-- something changed
+   '-- something changed or turned up
          |
          v
    ONE pull request, branch upstream-sync
      - moves the pins in sources.json (and in .mcp.json for Google's read connector)
      - adds reports/<date>.md: what changed, the commits, the text diff,
-       and which of OUR files came from that repo
+       which of OUR files came from that repo, and the new upstream skills
      - changes none of our skills or agents
          |
          v
    Someone adapts our files on that branch
      - by hand, or /upstream-sync in Claude Code (our own Claude plan), or
      - the optional "adapt" job in GitHub (off by default)
-     and writes reports/<date>-review.md: changed / left for a person / not for us
+     adopts the new skills worth having (our own version), records every decision in
+     catalog.json, and writes reports/<date>-review.md: changed / left for a person / not for us
          |
          v
    tests.yml passes, a person merges. Never automatic.
@@ -50,7 +52,8 @@ guard hook) stay as they were.
 | File | What it is |
 |---|---|
 | `sources.json` | The list: each upstream repo, the files we watch in it, which of our files came from it, how often to check, and the exact commit we last took (the "pin"). Only the script moves a pin. The guard hook stops agents editing it. |
-| `reports/<date>.md` | What changed upstream that week. Written by the script. |
+| `catalog.json` | Our decision on every upstream skill/agent we have looked at: adopted (and where), later, or skipped (and why). Anything not in here is listed as new in the next report. |
+| `reports/<date>.md` | What changed upstream that week, and the new skills/agents to review. Written by the script. |
 | `reports/<date>-review.md` | What we did about it. Written by whoever adapted our files. |
 | `../scripts/upstream_sync.py` | The checker. Standard-library Python, no AI. |
 | `../.claude/skills/upstream-sync/` | The `/upstream-sync` skill that adapts our files. |
